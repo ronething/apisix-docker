@@ -18,22 +18,13 @@
 version: "3"
 
 services:
-  apisix-dashboard:
-    image: apache/apisix-dashboard:2.15.0-alpine
-    restart: always
-    volumes:
-    - ./dashboard_conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
-    ports:
-    - "9000:9000"
-    networks:
-      apisix:
 
-  apisix:
+  apisix-cp:
     image: apache/apisix:latest
     restart: always
     volumes:
       # - ./apisix_log:/usr/local/apisix/logs
-      - ./apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./apisix_conf/config-cp.yaml:/usr/local/apisix/conf/config.yaml:ro
     depends_on:
       - etcd1
       - etcd2
@@ -41,10 +32,22 @@ services:
     ##network_mode: host
     ports:
       - "9180:9180/tcp"
+    networks:
+      apisix:
+
+  apisix-dp:
+    image: apache/apisix:latest
+    restart: always
+    volumes:
+      # - ./apisix_log:/usr/local/apisix/logs
+      - ./apisix_conf/config-dp.yaml:/usr/local/apisix/conf/config.yaml:ro
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+    ##network_mode: host
+    ports:
       - "9080:9080/tcp"
-      - "9091:9091/tcp"
-      - "9443:9443/tcp"
-      - "9092:9092/tcp"
     networks:
       apisix:
 
@@ -118,32 +121,6 @@ services:
     networks:
       apisix:
 
-  prometheus:
-    image: prom/prometheus:v2.25.0
-    restart: always
-    volumes:
-      - ./prometheus_conf/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      apisix:
-
-  grafana:
-    image: grafana/grafana:7.3.7
-    restart: always
-    ports:
-      - "3000:3000"
-    volumes:
-      - "./grafana_conf/provisioning:/etc/grafana/provisioning"
-      - "./grafana_conf/dashboards:/var/lib/grafana/dashboards"
-      - "./grafana_conf/config/grafana.ini:/etc/grafana/grafana.ini"
-    networks:
-      apisix:
-
 networks:
   apisix:
     driver: bridge
-
-volumes:
-  etcd_data:
-    driver: local
